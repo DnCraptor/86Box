@@ -53,6 +53,13 @@ extern int strnicmp(const char *s1, const char *s2, size_t n);
 #    define fseeko64 _fseeki64
 #    define ftello64 _ftelli64
 #    define off64_t  off_t
+#elif defined(__arm__)
+#   include "ff.h"
+#   define off64_t LBA_t
+#   define FILE FIL
+#   define feof(F) (f_size(F) == f_tell(F))
+/// TODO:
+#   define ferror(F) 0
 #endif
 
 #ifdef _MSC_VER

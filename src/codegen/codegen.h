@@ -40,14 +40,6 @@
 #include <86box/mem.h>
 #include "x86_ops.h"
 
-#ifdef __amd64__
-#    include "codegen_x86-64.h"
-#elif defined i386 || defined __i386 || defined __i386__ || defined _X86_ || defined _M_IX86 || defined _M_X64
-#    include "codegen_x86.h"
-#else
-#    error Dynamic recompiler not implemented on your platform
-#endif
-
 /*Handling self-modifying code (of which there is a lot on x86) :
 
   PCem tracks a 'dirty mask' for each physical page, in which each bit
@@ -111,6 +103,16 @@ typedef struct codeblock_t {
 
     uint8_t data[2048];
 } codeblock_t;
+
+#if defined(__arm__)
+#   include "codegen_new/codegen_backend_arm.h"
+#elif __amd64__
+#    include "codegen_x86-64.h"
+#elif defined i386 || defined __i386 || defined __i386__ || defined _X86_ || defined _M_IX86 || defined _M_X64
+#    include "codegen_x86.h"
+#else
+#    error Dynamic recompiler not implemented on your platform
+#endif
 
 /*Code block uses FPU*/
 #define CODEBLOCK_HAS_FPU 1

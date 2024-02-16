@@ -1,204 +1,254 @@
-#
-# 86Box     A hypervisor and IBM PC system emulator that specializes in
-#           running old operating systems and software designed for IBM
-#           PC systems and compatibles from 1981 through fairly recent
-#           system designs based on the PCI bus.
-#
-#           This file is part of the 86Box distribution.
-#
-#           CMake build script.
-#
-# Authors:  David Hrdlička, <hrdlickadavid@outlook.com>
-#
-#           Copyright 2020-2021 David Hrdlička.
-#
+cmake_minimum_required(VERSION 3.22)
+include(pico_sdk_import.cmake)
 
-cmake_minimum_required(VERSION 3.16)
+project(pico-xt C CXX ASM)
+option(OVERCLOCKING "Target Pico MHz" OFF)
+option(I2S_SOUND "Enable I2S sound" OFF)
+if(NOT OVERCLOCKING)
+    SET(OVERCLOCKING 408)
+endif ()
 
-cmake_policy(SET CMP0091 NEW)
-cmake_policy(SET CMP0079 NEW)
-
-if(HAIKU)
-    set(OPENAL ON)
-endif()
-
-if(NOT DEFINED QT OR QT)
-    list(APPEND VCPKG_MANIFEST_FEATURES "qt-ui")
-endif()
-
-if(NOT DEFINED OPENAL OR OPENAL)
-    list(APPEND VCPKG_MANIFEST_FEATURES "openal")
-endif()
-
-if(MUNT_EXTERNAL)
-    list(APPEND VCPKG_MANIFEST_FEATURES "munt")
-endif()
-
-project(86Box
-    VERSION 4.1
-    DESCRIPTION "Emulator of x86-based systems"
-    HOMEPAGE_URL "https://86box.net"
-    LANGUAGES C CXX)
-
-include(CPack)
-include(CMakeDependentOption)
-
-# Basic build options
-if(VCPKG_TOOLCHAIN)
-    # For vcpkg builds we have to respect the linking method used by the
-    # specified triplet.
-    set(NO_STATIC_OPTION ON)
-    if(VCPKG_TARGET_TRIPLET MATCHES "-static$")
-        # `-static` triplet, use static linking
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-        set(STATIC_BUILD ON)
-    elseif(VCPKG_TARGET_TRIPLET MATCHES "-static-md$")
-        # `-static-md` triplet, use static linking with dynamic CRT
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-        set(STATIC_BUILD ON)
-    elseif()
-        # Regular triplet, use dynamic linking
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-        set(STATIC_BUILD OFF)
-    endif()
-
-    # `vcpkg.json` defaults to Qt6
-    set(USE_QT6 ON)
-endif()
-
-if(WIN32)
-    # Prefer static builds on Windows
-    set(PREFER_STATIC ON)
-
-    # Default value for the `WIN32` target property, which specifies whether
-    # to build the application for the Windows GUI or console subsystem
-    option(CMAKE_WIN32_EXECUTABLE "Build a Windows GUI executable" ON)
-else()
-    # Prefer dynamic builds everywhere else
-    set(PREFER_STATIC OFF)
-endif()
-
-if(APPLE)
-    option(CMAKE_MACOSX_BUNDLE "Build a macOS bundle (.app)" ON)
-endif()
-
-if(NOT NO_STATIC_OPTION)
-    if(PREFER_STATIC)
-        option(STATIC_BUILD "Static build" ON)
-    else()
-        option(STATIC_BUILD "Static build" OFF)
-    endif()
-endif()
-
-# Detect the target architecture by trying to compile `src/arch_detect.c`
-try_compile(RESULT_VAR ${CMAKE_BINARY_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/src/arch_detect.c" OUTPUT_VARIABLE ARCH)
-string(REGEX MATCH "ARCH ([a-zA-Z0-9_]+)" ARCH "${ARCH}")
-string(REPLACE "ARCH " "" ARCH "${ARCH}")
-if (NOT ARCH)
-    set(ARCH unknown)
-endif()
-
-add_compile_definitions(CMAKE)
-add_compile_definitions("$<$<CONFIG:Debug>:DEBUG>")
-
-if(WIN32)
-    # Disables *_s function warnings
-    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
-
-    # Disables POSIX name warnings
-    add_compile_definitions(_CRT_NONSTDC_NO_WARNINGS)
-
-    # Disables WinSock deprecation warnings
-    add_compile_definitions(_WINSOCK_DEPRECATED_NO_WARNINGS)
-endif()
-
-if(NOT (WIN32 OR APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux"))
-    set(DISCORD OFF)
-endif()
+SET(BUILD_NAME "pico-xt")
 
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+set(CMAKE_CXX_STANDARD 17)
 
-# Optional features
-#
-#      Option       Description                                                     Def.
-#      ------       -----------                                                     ----
-option(RELEASE      "Release build"                                                 OFF)
-option(DYNAREC      "Dynamic recompiler"                                            ON)
-option(OPENAL       "OpenAL"                                                        ON)
-option(RTMIDI       "RtMidi"                                                        ON)
-option(FLUIDSYNTH   "FluidSynth"                                                    ON)
-option(MUNT         "MUNT"                                                          ON)
-option(VNC          "VNC renderer"                                                  OFF)
-option(DINPUT       "DirectInput"                                                   OFF)
-option(CPPTHREADS   "C++11 threads"                                                 ON)
-option(NEW_DYNAREC  "Use the PCem v15 (\"new\") dynamic recompiler"                 OFF)
-option(MINITRACE    "Enable Chrome tracing using the modified minitrace library"    OFF)
-option(GDBSTUB      "Enable GDB stub server for debugging"                          OFF)
-option(DEV_BRANCH   "Development branch"                                            OFF)
-option(QT           "Qt GUI"                                                        ON)
-option(DISCORD      "Discord Rich Presence support"                                 ON)
+pico_sdk_init()
 
-# Development branch features
-#
-#                      Option         Description                                   Def.    Condition       Otherwise
-#                      ------         -----------                                   ----    ---------       ---------
-cmake_dependent_option(AMD_K5         "AMD K5"                                      ON      "DEV_BRANCH"    OFF)
-cmake_dependent_option(AN430TX        "Intel AN430TX"                               ON      "DEV_BRANCH"    OFF)
-cmake_dependent_option(CYRIX_6X86     "Cyrix 6x86"                                  ON      "DEV_BRANCH"    OFF)
-cmake_dependent_option(DESKPRO386     "Compaq Deskpro 386"                          ON      "DEV_BRANCH"    OFF)
-cmake_dependent_option(GUSMAX         "Gravis UltraSound MAX"                       ON      "DEV_BRANCH"    OFF)
-cmake_dependent_option(ISAMEM_RAMPAGE "AST Rampage"                                 ON      "DEV_BRANCH"    OFF)
-cmake_dependent_option(ISAMEM_IAB     "Intel Above Board"                           ON      "DEV_BRANCH"    OFF)
-cmake_dependent_option(ISAMEM_BRAT    "BocaRAM/AT"                                  ON      "DEV_BRANCH"    OFF)
-cmake_dependent_option(LASERXT        "VTech Laser XT"                              ON      "DEV_BRANCH"    OFF)
-cmake_dependent_option(MGA2           "Matrox Millennium II and Productiva G100"    ON      "DEV_BRANCH"    OFF)
-cmake_dependent_option(OLIVETTI       "Olivetti M290"                               ON      "DEV_BRANCH"    OFF)
-cmake_dependent_option(OPEN_AT        "OpenAT"                                      ON      "DEV_BRANCH"    OFF)
-cmake_dependent_option(OPL4ML         "OPL4-ML daughterboard"                       ON      "DEV_BRANCH"    OFF)
-cmake_dependent_option(PAS16          "Pro Audio Spectrum 16"                       ON      "DEV_BRANCH"    OFF)
-cmake_dependent_option(SIO_DETECT     "Super I/O Detection Helper"                  ON      "DEV_BRANCH"    OFF)
-cmake_dependent_option(VGAWONDER      "ATI VGA Wonder (ATI-18800)"                  ON      "DEV_BRANCH"    OFF)
-cmake_dependent_option(XL24           "ATI VGA Wonder XL24 (ATI-28800-6)"           ON      "DEV_BRANCH"    OFF)
+set(CMAKE_INCLUDE_PATH ${PROJECT_SOURCE_DIR}/include)
+set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_DIR}")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIR}")
 
-# Ditto but for Qt
-if(QT)
-    option(USE_QT6 "Use Qt6 instead of Qt5" OFF)
-    if(APPLE)
-        option(MOLTENVK "Use MoltenVK libraries for Vulkan support on macOS. Requires a Vulkan-enabled QT." OFF)
+set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -ffast-math -feliminate-unused-debug-types -ffunction-sections -fdata-sections -O2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -ffast-math -feliminate-unused-debug-types -ffunction-sections -fdata-sections -O2")
+
+if (PICO_PLATFORM STREQUAL "host")
+    set(SDL2_LIB_DIR C:/SDL/lib)
+    set(SDL2_INCLUDE_DIR C:/SDL/include)
+    set(SDL2_LIBRARY C:/SDL/bin)
+
+    include_directories(
+            ${SDL2_INCLUDE_DIR}
+    )
+
+    link_directories(
+            ${SDL2_LIB_DIR}
+    )
+
+else ()
+    #add_compile_definitions(${PROJECT_NAME} NO_GRAPHICS)
+    set(FAMILY rp2040)
+    set(BOARD pico_sdk)
+
+    add_subdirectory(drivers/vga-nextgen)
+    add_subdirectory(drivers/ps2)
+    add_subdirectory(drivers/fatfs)
+    add_subdirectory(drivers/sdcard)
+    add_subdirectory(drivers/psram)
+    add_subdirectory(drivers/nespad)
+    add_subdirectory(drivers/audio)
+endif ()
+
+
+# INCLUDE FILES THAT SHOULD BE COMPILED:
+
+file(GLOB_RECURSE SRC "src/*.cpp" "src/*.c")
+
+
+message(STATUS "Add source files:")
+foreach (SRC_FILE IN LISTS SRC)
+    message(STATUS "${SRC_FILE}")
+endforeach ()
+message(STATUS "")
+
+
+add_executable(${PROJECT_NAME} ${SRC})
+
+pico_set_program_name(pico-xt "PICO PC/XT 8086 Emulator by xrip/DnCraptor")
+pico_set_program_version(pico-xt "test")
+
+#set(PICO_DEOPTIMIZED_DEBUG 1)
+
+if (PICO_PLATFORM STREQUAL "host")
+    target_link_libraries(${PROJECT_NAME} SDL2)
+    message(STATUS "Copying all dependencies to destination folder...")
+    file(GLOB PROJECT_DEPENDENCIES ${SDL2_LIBRARY}/*.dll)
+
+    foreach (Dependency IN LISTS PROJECT_DEPENDENCIES)
+        file(COPY ${Dependency} DESTINATION ${OUTPUT_DIR})
+    endforeach ()
+    add_link_options(-Wl,--gc-sections)
+
+else ()
+    if (OVERCLOCKING)
+        SET(BUILD_NAME "${BUILD_NAME}-${OVERCLOCKING}MHz")
+        target_compile_definitions(${PROJECT_NAME} PRIVATE OVERCLOCKING=${OVERCLOCKING})
+
+        pico_define_boot_stage2(slower_boot2 ${PICO_DEFAULT_BOOT_STAGE2_FILE})
+        target_compile_definitions(slower_boot2 PRIVATE PICO_FLASH_SPI_CLKDIV=4)
+        pico_set_boot_stage2(${PROJECT_NAME} slower_boot2)
+
+        message(STATUS "==================================")
+        message(STATUS "Overclocking ${OVERCLOCKING}MHz enabled")
+        message(STATUS "==================================")
+        message(STATUS "")
+    endif ()
+    if (I2S_SOUND)
+        SET(BUILD_NAME "${BUILD_NAME}-I2S")
+        target_compile_definitions(${PROJECT_NAME} PRIVATE I2S_SOUND=1)
+
+        message(STATUS "==================================")
+        message(STATUS "I2S sound enabled")
+        message(STATUS "==================================")
+        message(STATUS "")
     endif()
-endif()
 
-# Determine the build type
-set(RELEASE_BUILD   OFF)
-set(BETA_BUILD      OFF)
-set(ALPHA_BUILD     OFF)
+    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${BUILD_NAME}")
 
-string(TOLOWER "${BUILD_TYPE}" BUILD_TYPE_LOWER)
-if(BUILD_TYPE_LOWER STREQUAL "release")
-    # Release build
-    set(RELEASE_BUILD ON)
-    add_compile_definitions(RELEASE_BUILD)
-elseif(BUILD_TYPE_LOWER STREQUAL "beta")
-    # Beta build
-    set(BETA_BUILD ON)
-    add_compile_definitions(BETA_BUILD)
-elseif(BUILD_TYPE_LOWER STREQUAL "alpha")
-    # Alpha build
-    set(ALPHA_BUILD ON)
-    add_compile_definitions(ALPHA_BUILD)
-endif()
+    # Enable compiler and linker garbage collect unused code/data sections
+    add_link_options(-Wl,--gc-sections)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            vga-nextgen
+            ps2
+            psram
+            sdcard
+            fatfs
+            nespad
+            audio
 
-# Versioning variables
-if(NOT CMAKE_PROJECT_VERSION_PATCH)
-    set(CMAKE_PROJECT_VERSION_PATCH 0)
-endif()
-if(NOT EMU_BUILD_NUM)
-    set(EMU_BUILD_NUM 0)
-endif()
-if(NOT EMU_COPYRIGHT_YEAR)
-    set(EMU_COPYRIGHT_YEAR 2024)
-endif()
+            pico_runtime
+            pico_stdlib
+            pico_rand
+            pico_multicore
+            hardware_dma
+            hardware_pio
+            hardware_i2c
+            hardware_interp
+            hardware_timer
+            hardware_clocks
+            hardware_pwm
+            hardware_flash
 
-add_subdirectory(src)
+            tinyusb_board
+            tinyusb_device
+    )
+    target_link_options(${PROJECT_NAME} PRIVATE "LINKER:--script=${CMAKE_CURRENT_LIST_DIR}/memmap.ld")
+    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/memmap.ld)
+
+    target_sources(${PROJECT_NAME} PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}/drivers/usb/usb.c
+            ${CMAKE_CURRENT_SOURCE_DIR}/drivers/usb/msc_disk.c
+            ${CMAKE_CURRENT_SOURCE_DIR}/drivers/usb/usb_descriptors.c
+    )
+    target_include_directories(${PROJECT_NAME} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/cpu
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/include/86box
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/include_make
+            ${CMAKE_CURRENT_SOURCE_DIR}/drivers/usb
+            ${CMAKE_CURRENT_SOURCE_DIR}/assets
+    )
+    if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(${PROJECT_NAME} PUBLIC
+                -mcpu=cortex-m0plus
+                -Wno-error=suggest-attribute=format
+                -Wno-error=cast-qual
+                -Wno-error=unused-parameter
+                -Wno-error=conversion
+                -Wno-error=format=
+                -Wno-error=sign-compare
+                -Wno-error=missing-field-initializers
+                -Wno-error=switch
+                -Wno-error=implicit-fallthrough=
+                -Wno-error=stringop-truncation
+                -Wno-error=restrict
+                -w
+        )
+    endif ()
+
+
+    #[[    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND picotool info ${OUTPUT_DIR}/$<TARGET_PROPERTY:OUTPUT_NAME>.uf2 &&
+                picotool reboot -f -u & mode COM8 baud=12 parity=n data=8 stop=1 & ping -n 3 127.1> nul &
+                picotool load ${OUTPUT_DIR}/$<TARGET_PROPERTY:OUTPUT_NAME>.uf2 &&
+                picotool reboot
+        )]]
+
+endif ()
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+        PICO_HEAP_SIZE=0
+        USE_ZONE_FOR_MALLOC=1
+
+        PICO_DEFAULT_UART_RX_PIN=-1
+        PICO_DEFAULT_UART_TX_PIN=0
+
+        # SDCARD
+        SDCARD_PIN_SPI0_CS=5
+        SDCARD_PIN_SPI0_SCK=2
+        SDCARD_PIN_SPI0_MOSI=3
+        SDCARD_PIN_SPI0_MISO=4
+
+        # NES Gamepad
+        USE_NESPAD
+        NES_GPIO_CLK=14
+        NES_GPIO_DATA=16
+        NES_GPIO_LAT=15
+
+        PSRAM
+        # PSRAM_MUTEX=1
+        PSRAM_SPINLOCK=1
+        PSRAM_ASYNC=1
+
+        PSRAM_PIN_CS=18
+        PSRAM_PIN_SCK=19
+        PSRAM_PIN_MOSI=20
+        PSRAM_PIN_MISO=21
+
+        # supports only for pico with 4 or more MB flashes
+        PICO_FLASH_SIZE_BYTES=4194304
+
+        #BOOT_DEBUG=1
+        #BOOT_DEBUG_ACC=0xA0000
+
+        # select onr of the folowing:
+        #SWAP_BLOCK_1k
+        SWAP_BLOCK_2k
+        #SWAP_BLOCK_4k
+
+        EMS_DRIVER=1
+        #EMS_DEBUG=1
+
+        XMS_DRIVER=1
+        XMS_OVER_HMA_KB=1024
+        MAX_XMM_HANDLES=60
+        XMS_UMB=1
+        XMS_HMA=1
+        #XMS_DEBUG=1
+
+        HANDLE_REBOOT
+
+        SOUND_ENABLED
+        #I2S_SOUND
+        # PWM mode for i2s driver
+        #AUDIO_PWM_PIN=26
+        #CMS
+        #SOUND_BLASTER
+        #ADLIB
+        TANDY3V
+        COVOX
+        DSS
+
+#        ROM_DRIVE_B=1
+
+        #DMA_8237
+)
+target_link_options(${PROJECT_NAME} PRIVATE -Xlinker --print-memory-usage)
+
+pico_enable_stdio_uart(${PROJECT_NAME} 0)
+pico_enable_stdio_usb(${PROJECT_NAME} 0)
+
+pico_add_extra_outputs(${PROJECT_NAME})

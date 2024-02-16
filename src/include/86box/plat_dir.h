@@ -68,7 +68,40 @@ extern int            closedir(DIR *);
 #    define rewinddir(dirp) seekdir(dirp, 0L)
 #else
 /* On linux and macOS, use the standard functions and types */
-#    include <dirent.h>
+///#    include <dirent.h>
+#include "ff.h"
+
+#    ifdef _MAX_FNAME
+#        define MAXNAMLEN _MAX_FNAME
+#    else
+#        define MAXNAMLEN 15
+#    endif
+#    define MAXDIRLEN 127
+
+struct dirent { // TODO:
+    long           d_ino;
+    unsigned short d_reclen;
+    unsigned short d_off;
+#    ifdef UNICODE
+    wchar_t d_name[MAXNAMLEN + 1];
+#    else
+    char d_name[MAXNAMLEN + 1];
+#    endif
+};
+#    define d_namlen d_reclen
+
+/* Directory routine flags. */
+#    define DIR_F_LOWER  0x0001 /* force to lowercase */
+#    define DIR_F_SANE   0x0002 /* force this to sane path */
+#    define DIR_F_ISROOT 0x0010 /* this is the root directory */
+
+/* Function prototypes. */
+extern DIR           *opendir(const char *);
+extern struct dirent *readdir(DIR *);
+extern long           telldir(DIR *);
+extern void           seekdir(DIR *, long);
+extern int            closedir(DIR *);
+
 #endif
 
 #endif /*PLAT_DIR_H*/
