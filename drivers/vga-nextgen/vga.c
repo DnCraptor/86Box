@@ -15,6 +15,9 @@
 
 #include "../../src/cga.h"
 
+// TODO:
+uint8_t RAM[0x460] = { 0 };
+
 uint16_t pio_program_VGA_instructions[] = {
     //     .wrap_target
     0x6008, //  0: out    pins, 8
@@ -74,7 +77,7 @@ static uint16_t* txt_palette_fast = NULL;
 //static uint16_t txt_palette_fast[256*4];
 
 enum graphics_mode_t graphics_mode;
-extern volatile bool manager_started;
+const bool manager_started = false;
 
 
 void __scratch_y("vga_driver") dma_handler_VGA() {
@@ -552,7 +555,6 @@ void set_start_debug_line(int _start_debug_line) {
 void logFile(char* msg);
 #endif
 
-extern volatile bool manager_started;
 void logMsg(char* msg) {
     return;
 #if BOOT_DEBUG

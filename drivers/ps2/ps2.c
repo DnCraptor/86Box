@@ -126,7 +126,7 @@ static int16_t ps2_recv_response(void) {
     return c;
 }
 
-int16_t keyboard_send(uint8_t data) {
+int16_t ps2_keyboard_send(uint8_t data) {
     bool parity = true;
     ps2_error = PS2_ERR_NONE;
 
@@ -188,9 +188,9 @@ int16_t keyboard_send(uint8_t data) {
 void keyboard_toggle_led(uint8_t led) {
     led_status ^= led;
 
-    keyboard_send(0xED);
+    ps2_keyboard_send(0xED);
     busy_wait_ms(50);
-    keyboard_send(led_status);
+    ps2_keyboard_send(led_status);
 }
 
 uint8_t ps2_to_xt_1(uint32_t val) {
@@ -293,7 +293,7 @@ void KeyboardHandler(void) {
     kbloop = 1;
 }
 
-void keyboard_init(void) {
+void ps2_keyboard_init(void) {
     bitcount = 0;
     memset(ps2buffer, 0, KBD_BUFFER_SIZE);
 
@@ -332,10 +332,14 @@ void keyboard_init(void) {
     return;
 }
 
-extern uint16_t portram[256];
-
-extern void doirq(uint8_t irqnum);
-extern bool handleScancode(uint32_t ps2scancode);
+/// TODO
+uint16_t portram[256]= { 0 };
+void doirq(uint8_t irqnum) {
+    ///TODO
+}
+bool handleScancode(uint32_t ps2scancode) {
+    /// TODO:
+}
 
 void ps2poll() {
     uint32_t ps2scancode;

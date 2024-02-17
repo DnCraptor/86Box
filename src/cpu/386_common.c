@@ -2065,8 +2065,8 @@ nmi_raise(void)
 
 #ifndef USE_DYNAREC
 /* This is for compatibility with new x87 code. */
-void
-codegen_set_rounding_mode(int mode)
+void ////
+codegen_set_rounding_mode_386_TODO(int mode)
 {
     /* cpu_state.new_npxc = (cpu_state.old_npxc & ~0xc00) | (mode << 10); */
 }

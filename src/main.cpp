@@ -261,7 +261,7 @@ int main() {
     }
 
     nespad_begin(clock_get_hz(clk_sys) / 1000, NES_GPIO_CLK, NES_GPIO_DATA, NES_GPIO_LAT);
-    keyboard_init();
+    ps2_keyboard_init();
 
     sem_init(&vga_start_semaphore, 0, 1);
     multicore_launch_core1(second_core);
@@ -276,7 +276,7 @@ int main() {
     FRESULT result = f_mount(&fs, "", 1);
     if (FR_OK != result) {
         char tmp[80];
-        sprintf(tmp, "Unable to mount SD-card: %s (%d)", FRESULT_str(result), result);
+        snprintf(tmp, 80, "Unable to mount SD-card: %s (%d)", FRESULT_str(result), result);
         logMsg(tmp);
     }
     else {
@@ -289,6 +289,8 @@ int main() {
         logMsg((char *)"Mo PSRAM or SD CARD available. Only 160Kb RAM will be usable...");
         sleep_ms(3000);
     }
+
+    logMsg((char *)"Test init - done...");
 
 #else
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO);

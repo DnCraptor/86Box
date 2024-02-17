@@ -16,7 +16,7 @@ static struct
 };
 
 void
-codegen_accumulate(int acc_reg, int delta)
+codegen_accumulate_x86_64(int acc_reg, int delta)
 {
     acc_regs[acc_reg].count += delta;
 
@@ -45,8 +45,8 @@ codegen_accumulate(int acc_reg, int delta)
 #endif
 }
 
-void
-codegen_accumulate_flush(void)
+void ///
+codegen_accumulate_flush_x86_64(void)
 {
     if (acc_regs[0].count) {
         /* To reduce the size of the generated code, we take advantage of
@@ -62,8 +62,8 @@ codegen_accumulate_flush(void)
     acc_regs[0].count = 0;
 }
 
-void
-codegen_accumulate_reset(void)
+void ///
+codegen_accumulate_reset_x86_64(void)
 {
     acc_regs[0].count = 0;
 }
