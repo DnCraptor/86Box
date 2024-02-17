@@ -186,6 +186,9 @@ typedef struct _device_ {
     const device_config_t *config;
 } device_t;
 
+/// @brief  TODO:
+extern device_t keyboard_xt_lxt3_device;
+
 typedef struct device_context_t {
     const device_t *dev;
     char            name[2048];

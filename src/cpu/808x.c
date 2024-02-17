@@ -1660,8 +1660,7 @@ cpu_outw(uint16_t port, uint16_t val)
 }
 
 /* Executes instructions up to the specified number of cycles. */
-void
-execx86(int cycs)
+void execx86(int32_t cycs)
 {
     uint8_t  temp = 0, temp2, old_af, nests;
     uint8_t  temp_val, temp_al, bit, handled = 0;

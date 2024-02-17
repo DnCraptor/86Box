@@ -4,7 +4,7 @@
 // Released under the MIT license.
 
 // See minitrace.h for basic documentation.
-
+#ifdef MINI_TRACE
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -569,3 +569,4 @@ void internal_mtr_raw_event_arg(const char *category, const char *name, char ph,
     --events_in_progress;
     pthread_mutex_unlock(&event_mutex);
 }
+#endif

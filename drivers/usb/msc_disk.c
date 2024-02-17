@@ -26,13 +26,21 @@
 #include "bsp/board_api.h"
 #include "tusb.h"
 #include "usb.h"
-#include "emulator.h"
+///#include "emulator.h"
 
+#ifdef ROM_DRIVE_B
 #include "fdd.h"
+#endif
+#ifdef ROM_DRIVE_A
 #include "startup_disk.h"
+#endif
 
 char* fdd0_rom() {
+#if ROM_DRIVE_A
   return FDD0;
+#else
+  return NULL;
+#endif
 }
 
 char* fdd1_rom() {
@@ -44,7 +52,11 @@ char* fdd1_rom() {
 }
 
 size_t fdd0_sz() {
+#if ROM_DRIVE_A
   return sizeof FDD0;
+#else
+  return 0;
+#endif
 }
 
 size_t fdd1_sz() {
@@ -136,7 +148,11 @@ void tud_msc_capacity_cb(uint8_t lun, uint32_t* block_count, uint16_t* block_siz
   switch(lun) {
 	case 0: {
       int r = getFileA_sz();
+  #if ROM_DRIVE_A
       *block_count = (r ? r : sizeof(FDD0)) / DISK_BLOCK_SIZE;
+  #else
+      *block_count = r / DISK_BLOCK_SIZE;
+  #endif
       *block_size  = DISK_BLOCK_SIZE;
 	}
 	break;
@@ -198,11 +214,15 @@ int32_t tud_msc_read10_cb(uint8_t lun, uint32_t lba, uint32_t offset, void* buff
   size_t rom_sz;
   switch(lun) {
 	case 0: {
+  #if ROM_DRIVE_A
     if (getFileA_sz()) {
 		  return img_disk_read_sec(0, buffer, lba) ? bufsize : -1;
     }
 		rom = FDD0;
 		rom_sz = sizeof(FDD0);
+  #else
+    return img_disk_read_sec(1, buffer, lba) ? bufsize : -1;
+  #endif
  	}
 	break;
 	case 1: {

@@ -50,7 +50,9 @@
  */
 #include <stdatomic.h>
 #define PNG_DEBUG 0
+#ifdef HAVE_PNG_H
 #include <png.h>
+#endif
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -304,6 +306,7 @@ video_wait_for_buffer_monitor(int monitor_index)
     thread_reset_event(blit_data_ptr->buffer_not_in_use);
 }
 
+#ifdef HAVE_PNG_H
 static png_structp png_ptr[MONITORS_NUM];
 static png_infop   info_ptr[MONITORS_NUM];
 
@@ -417,6 +420,7 @@ video_screenshot(uint32_t *buf, int start_x, int start_y, int row_len)
 {
     video_screenshot_monitor(buf, start_x, start_y, row_len, 0);
 }
+#endif
 
 #ifdef _WIN32
 void *__cdecl video_transform_copy(void *_Dst, const void *_Src, size_t _Size)

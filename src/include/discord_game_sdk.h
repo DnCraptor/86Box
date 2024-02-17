@@ -4,7 +4,7 @@
  * the Discord Developer Terms of Service:
  * https://github.com/discordapp/discord-api-docs/blob/master/docs/Legal.md
  */
-
+#ifdef DISCORD
 #ifndef _DISCORD_GAME_SDK_H_
 #define _DISCORD_GAME_SDK_H_
 
@@ -731,6 +731,8 @@ enum EDiscordResult DISCORD_API DiscordCreate(DiscordVersion version, struct Dis
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 #endif

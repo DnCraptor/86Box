@@ -99,6 +99,7 @@ typedef struct _upi42_ {
     uint8_t  ram_index;
     uint16_t rom_index;
 #endif
+    uint8_t bm_stat;
 } upi42_t;
 
 static inline void
@@ -1006,7 +1007,7 @@ upi42_reset(upi42_t *upi42)
 }
 
 void
-upi42_do_init(upi32_t type, uint8_t *rom)
+upi42_do_init(upi42_t *upi42, uint32_t type, uint8_t *rom)
 {
     memset(upi42, 0x00, sizeof(upi42_t));
     upi42->rom = rom;
@@ -1027,9 +1028,9 @@ upi42_do_init(upi32_t type, uint8_t *rom)
         upi42->ops[0xe2] = NULL; /* SUSPEND */
     }
 
-    memset(upi42_t->ports_in, 0xff, sizeof(upi42_t->ports_in));
-    upi42_t->t0 = 1;
-    upi42_t->t1 = 1;
+    memset(upi42->ports_in, 0xff, sizeof(upi42->ports_in));
+    upi42->t0 = 1;
+    upi42->t1 = 1;
 }
 
 void *
@@ -1037,7 +1038,7 @@ upi42_init(uint32_t type, uint8_t *rom)
 {
     /* Allocate state structure. */
     upi42_t *upi42 = (upi42_t *) malloc(sizeof(upi42_t));
-    upi42_do_init(type, rom);
+    upi42_do_init(upi42, type, rom);
 
     return upi42;
 }
@@ -1206,12 +1207,12 @@ upi42_write(uint16_t port, uint8_t val, void *priv)
 
         /* Input ports. */
         case 0x0180 ... 0x0187:
-            upi42->ports_in[addr & 0x0007] = val;
+            upi42->ports_in[port & 0x0007] = val;
             break;
 
         /* Output ports. */
         case 0x0188 ... 0x018f:
-            upi42->ports_out[addr & 0x0007] = val;
+            upi42->ports_out[port & 0x0007] = val;
             break;
 
         /* 4 = T0, 5 = T1. */
@@ -1250,7 +1251,7 @@ upi42_write(uint16_t port, uint8_t val, void *priv)
         case 0x01a2:
             temp_type = upi42->type;
             temp_rom  = upi42->rom;
-            upi42_do_init(temp_type, temp_rom);
+            upi42_do_init(upi42, temp_type, temp_rom);
             break;
 
         /* Soft reset. */
@@ -1284,10 +1285,10 @@ upi42_write(uint16_t port, uint8_t val, void *priv)
         case 0x01aa:
             if (val & 0x01) {
                 for (i = 0; i <= upi42->rommask; i += 4)
-                    *(uint32_t *) &(upi42->rom[i]) = mem_readl_phys(upi42->ram_addr + i);
+                    *(uint32_t *) &(upi42->rom[i]) = mem_readl_phys(upi42->ram_index + i);
             } else {
                 for (i = 0; i <= upi42->rommask; i += 4)
-                    mem_writel_phys(upi42->ram_addr + i, *(uint32_t *) &(upi42->rom[i]));
+                    mem_writel_phys(upi42->ram_index + i, *(uint32_t *) &(upi42->rom[i]));
             }
             upi42->bm_stat = (val & 0x01) | 0x02;
             break;
@@ -1345,12 +1346,12 @@ upi42_read(uint16_t port, void *priv)
 
         /* Input ports. */
         case 0x0180 ... 0x0187:
-            ret = upi42->ports_in[addr & 0x0007];
+            ret = upi42->ports_in[port & 0x0007];
             break;
 
         /* Output ports. */
         case 0x0188 ... 0x018f:
-            ret = upi42->ports_out[addr & 0x0007];
+            ret = upi42->ports_out[port & 0x0007];
             break;
 
         /* Accumulator. */

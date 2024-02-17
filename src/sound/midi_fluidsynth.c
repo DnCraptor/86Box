@@ -1,4 +1,5 @@
 /* some code borrowed from scummvm */
+#ifdef MIDI_FLUIDSYNTH
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -498,3 +499,4 @@ const device_t fluidsynth_device = {
     .config        = fluidsynth_config
 };
 
+#endif

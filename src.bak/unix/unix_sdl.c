@@ -1,3 +1,5 @@
+#ifdef UNIX_SDL
+
 #include <SDL.h>
 #include <SDL_messagebox.h>
 
@@ -549,3 +551,4 @@ plat_resize_request(int w, int h, int monitor_index)
 {
     atomic_store((&doresize_monitors[monitor_index]), 1);
 }
+#endif

@@ -16,6 +16,7 @@
  *           Copyright 2008-2019 Sarah Walker.
  *           Copyright 2016-2019 Miran Grca.
  */
+#ifdef OPEN_AL
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -274,3 +275,4 @@ givealbuffer_midi(void *buf, uint32_t size)
 {
     givealbuffer_common(buf, 2, size, midi_freq);
 }
+#endif

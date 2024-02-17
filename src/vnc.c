@@ -15,6 +15,7 @@
  *
  *          Copyright 2017-2019 Fred N. van Kempen.
  */
+#ifdef VNC_SUPPORT
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -311,3 +312,4 @@ vnc_take_screenshot(UNUSED(wchar_t *fn))
 {
     vnc_log("VNC: take_screenshot\n");
 }
+#endif

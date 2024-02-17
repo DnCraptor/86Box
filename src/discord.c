@@ -14,6 +14,8 @@
  *
  *          Copyright 2019 David Hrdlička.
  */
+#ifdef DISCORD
+
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -194,3 +196,4 @@ discord_run_callbacks(void)
 
     discord_core->run_callbacks(discord_core);
 }
+#endif

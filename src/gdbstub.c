@@ -14,12 +14,15 @@
  *
  *          Copyright 2022 RichardG.
  */
+#ifdef GDB_STUB
+
 #include <inttypes.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #ifdef _WIN32
 #    ifndef __clang__
 #        include <unistd.h>
@@ -36,6 +39,7 @@
 #    include <sys/socket.h>
 #    include <errno.h>
 #endif
+
 #define HAVE_STDARG_H
 #include <86box/86box.h>
 #include "cpu.h"
@@ -1849,3 +1853,4 @@ gdbstub_close(void)
     thread_release_mutex(client_list_mutex);
     thread_close_mutex(client_list_mutex);
 }
+#endif

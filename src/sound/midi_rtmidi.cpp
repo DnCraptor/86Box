@@ -13,7 +13,7 @@
  *          Copyright 2021 Cacodemon345.
  *          Copyright 2021 Miran Grca.
  */
-
+#ifdef MIDI_RTM
 #if defined __has_include
 #    if __has_include(<RtMidi.h>)
 #        include <RtMidi.h>
@@ -312,3 +312,4 @@ const device_t rtmidi_input_device = {
 #endif
 
 }
+#endif

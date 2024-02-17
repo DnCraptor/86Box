@@ -13,6 +13,7 @@
  *
  *          Copyright 2022 Adrien Moulin.
  */
+#ifdef YMFM
 #include <cstdarg>
 #include <cstdint>
 #include <cstdio>
@@ -479,3 +480,5 @@ const fm_drv_t ymfm_drv {
 #endif
 
 }
+
+#endif

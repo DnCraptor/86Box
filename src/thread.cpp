@@ -1,3 +1,5 @@
+#ifdef THREAD_T
+
 #include <mutex>
 #include <thread>
 #include <condition_variable>
@@ -135,3 +137,4 @@ thread_destroy_event(event_t *handle)
     delete event;
 }
 }
+#endif

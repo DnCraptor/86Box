@@ -14,6 +14,7 @@
  *
  *           Copyright 2022 Cacodemon345.
  */
+#ifdef XAUDIO2
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -290,3 +291,4 @@ givealbuffer_midi(void *buf, uint32_t size)
 {
     givealbuffer_common(buf, srcvoicemidi, size);
 }
+#endif

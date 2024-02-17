@@ -146,6 +146,7 @@ else ()
             ${CMAKE_CURRENT_SOURCE_DIR}/src
             ${CMAKE_CURRENT_SOURCE_DIR}/src/cpu
             ${CMAKE_CURRENT_SOURCE_DIR}/src/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/codegen
             ${CMAKE_CURRENT_SOURCE_DIR}/src/include/86box
             ${CMAKE_CURRENT_SOURCE_DIR}/src/include_make
             ${CMAKE_CURRENT_SOURCE_DIR}/drivers/usb
@@ -242,6 +243,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         COVOX
         DSS
 
+#        ROM_DRIVE_A=0
 #        ROM_DRIVE_B=1
 
         #DMA_8237
