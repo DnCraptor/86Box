@@ -181,8 +181,10 @@ else ()
 endif ()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
-        PICO_HEAP_SIZE=0
+        PICO_ON_DEVICE=1
         USE_ZONE_FOR_MALLOC=1
+
+        BEEPER_PIN=28
 
         PICO_DEFAULT_UART_RX_PIN=-1
         PICO_DEFAULT_UART_TX_PIN=0
@@ -230,18 +232,18 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         XMS_HMA=1
         #XMS_DEBUG=1
 
-        HANDLE_REBOOT
+        #HANDLE_REBOOT
 
-        SOUND_ENABLED
+        #SOUND_ENABLED
         #I2S_SOUND
         # PWM mode for i2s driver
         #AUDIO_PWM_PIN=26
         #CMS
         #SOUND_BLASTER
         #ADLIB
-        TANDY3V
-        COVOX
-        DSS
+        #TANDY3V
+        #COVOX
+        #DSS
 
 #        ROM_DRIVE_A=0
 #        ROM_DRIVE_B=1
