@@ -22,6 +22,9 @@ extern "C" {
 ///#include "usb.h"
 ///#include "manager.h"
 }
+
+extern "C" void pc_reset_hard_init(void);
+
 #if I2S_SOUND
 #include "audio.h"
 #endif
@@ -584,7 +587,7 @@ int main() {
     vga_palette[254] = rgb(0, 0, 0);
     vga_palette[255] = rgb(0, 0, 0);
 
-  ///  reset86();
+    pc_reset_hard_init();
     while (runing) {
 #if !PICO_ON_DEVICE
         handleinput();
